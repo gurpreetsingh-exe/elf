@@ -42,7 +42,6 @@ int main(int argc, char** argv) {
     }
 
     size_t filesz = statbuf.st_size;
-    // I guess allocating 
     uint8_t* buffer = (uint8_t*)malloc(filesz);
     size_t sz = fread(buffer, sizeof(uint8_t), filesz, f);
     if (sz != filesz) {
