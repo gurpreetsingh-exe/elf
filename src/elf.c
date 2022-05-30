@@ -66,7 +66,6 @@ void read_elf_header(const char* filename, uint8_t* buf) {
             exit(1);
         }
     }
-    printf("INFO: `%s` is a valid elf file\n", filename);
 
     printf("Class: \t\t\t\t%s\n\
 Data: \t\t\t\t%s endian\n\
