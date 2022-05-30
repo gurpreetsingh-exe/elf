@@ -67,24 +67,30 @@ void read_elf_header(const char* filename, uint8_t* buf) {
         }
     }
 
-    printf("Class: \t\t\t\t%s\n\
-Data: \t\t\t\t%s endian\n\
-Version: \t\t\t%d\n\
-OS/ABI: \t\t\t%s\n\
-ABI Version: \t\t\t%d\n\
-Type: \t\t\t\t%s\n\
-Machine: \t\t\tAdvanced Micro Devices X86-64\n\
-Version: \t\t\t%d\n\
-Entry Point: \t\t\t0x%lx\n\
-Program Header Start: \t\t%ld (bytes into file)\n\
-Section Header Start: \t\t%ld (bytes into file)\n\
-Flags: \t\t\t\t0x%x\n\
-Size of this header: \t\t%d (bytes)\n\
-Size of Program headers: \t%d (bytes)\n\
-Number of Program headers: \t%d\n\
-Size of Section headers: \t%d (bytes)\n\
-Number of Section headers: \t%d\n\
-String table index: \t\t%d\n",
+    printf("ELF Header:\n  Magic:   ");
+    for (size_t i = 0; i < 16; ++i) {
+        printf("%02x ", buf[i]);
+    }
+    printf("\n");
+
+    printf("  Class: \t\t\t%s\n\
+  Data: \t\t\t%s endian\n\
+  Version: \t\t\t%d\n\
+  OS/ABI: \t\t\t%s\n\
+  ABI Version: \t\t\t%d\n\
+  Type: \t\t\t%s\n\
+  Machine: \t\t\tAdvanced Micro Devices X86-64\n\
+  Version: \t\t\t%d\n\
+  Entry Point: \t\t\t0x%lx\n\
+  Program Header Start: \t%ld (bytes into file)\n\
+  Section Header Start: \t%ld (bytes into file)\n\
+  Flags: \t\t\t0x%x\n\
+  Size of this header: \t\t%d (bytes)\n\
+  Size of Program headers: \t%d (bytes)\n\
+  Number of Program headers: \t%d\n\
+  Size of Section headers: \t%d (bytes)\n\
+  Number of Section headers: \t%d\n\
+  String table index: \t\t%d\n",
         elf_class[buf[4] - 1],
         elf_data[buf[5] - 1],
         buf[6],
