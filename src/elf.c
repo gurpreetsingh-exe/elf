@@ -51,6 +51,8 @@ int main(int argc, char** argv) {
             strerror(errno));
         exit(1);
     }
+    fclose(f);
+
     read_elf(filename, buffer);
     free(buffer);
 
