@@ -42,7 +42,7 @@ const char* elf_type[] = {
     "Core file",
 };
 
-uint64_t read_u64(const uint8_t* buf, uint64_t addr) {
+static inline uint64_t read_u64(const uint8_t* buf, uint64_t addr) {
     return (buf[addr])
         | buf[addr + 1] << 8
         | buf[addr + 2] << 16
@@ -53,14 +53,14 @@ uint64_t read_u64(const uint8_t* buf, uint64_t addr) {
         | (uint64_t)buf[addr + 7] << 56;
 }
 
-uint32_t read_u32(const uint8_t* buf, uint32_t addr) {
+static inline uint32_t read_u32(const uint8_t* buf, uint32_t addr) {
     return (buf[addr])
         | buf[addr + 1] << 8
         | buf[addr + 2] << 16
         | buf[addr + 3] << 24;
 }
 
-uint16_t read_u16(const uint8_t* buf, uint16_t addr) {
+static inline uint16_t read_u16(const uint8_t* buf, uint16_t addr) {
     return buf[addr] | buf[addr + 1] << 8;
 }
 
