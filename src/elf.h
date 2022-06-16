@@ -19,6 +19,8 @@ typedef struct {
     uint16_t      e_shstrndx;
 } Elf64_Ehdr;
 
+const uint64_t ehdr_size = sizeof(Elf64_Ehdr);
+
 typedef struct {
     uint32_t   p_type;
     uint32_t   p_flags;
@@ -29,3 +31,5 @@ typedef struct {
     uint64_t   p_memsz;
     uint64_t   p_align;
 } Elf64_Phdr;
+
+const uint64_t phdr_size = sizeof(Elf64_Phdr);

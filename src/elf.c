@@ -116,13 +116,42 @@ void read_elf_header(const char* filename, uint8_t* buf, Elf64_Ehdr* ehdr) {
     ehdr->e_shentsize = read_u16(buf, 0x3a);
     ehdr->e_shnum     = read_u16(buf, 0x3c);
     ehdr->e_shstrndx  = read_u16(buf, 0x3e);
+}
 
-    dump_header(ehdr);
+Elf64_Phdr* read_program_header(uint8_t* buf, uint64_t phoff) {
+    Elf64_Phdr* phdr = (Elf64_Phdr*)malloc(phdr_size);
+
+    phdr->p_type   = read_u32(buf, 0x00 + phoff);
+    phdr->p_flags  = read_u32(buf, 0x04 + phoff);
+    phdr->p_offset = read_u64(buf, 0x08 + phoff);
+    phdr->p_vaddr  = read_u64(buf, 0x10 + phoff);
+    phdr->p_paddr  = read_u64(buf, 0x18 + phoff);
+    phdr->p_filesz = read_u64(buf, 0x20 + phoff);
+    phdr->p_memsz  = read_u64(buf, 0x28 + phoff);
+    phdr->p_align  = read_u64(buf, 0x30 + phoff);
+
+    return phdr;
+}
+
+void read_program_headers(uint8_t* buf, Elf64_Ehdr* ehdr, Elf64_Phdr** phdr_list) {
+    uint64_t phoff = ehdr->e_phoff;
+    for (size_t i = 0; i < ehdr->e_phnum; ++i) {
+        phdr_list[i] = read_program_header(buf, phoff);
+        phoff += phdr_size;
+    }
 }
 
 void read_elf(const char* filename, uint8_t* buf) {
-    Elf64_Ehdr* ehdr = (Elf64_Ehdr*)malloc(sizeof(Elf64_Ehdr));
+    Elf64_Ehdr* ehdr = (Elf64_Ehdr*)malloc(ehdr_size);
     read_elf_header(filename, buf, ehdr);
+
+    Elf64_Phdr** phdr_list = (Elf64_Phdr**)malloc(phdr_size * ehdr->e_phnum);
+    read_program_headers(buf, ehdr, phdr_list);
+
+    for (size_t i = 0; i < ehdr->e_phnum; ++i) {
+        free(phdr_list[i]);
+    }
+    free(phdr_list);
     free(ehdr);
 }
 
