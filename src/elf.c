@@ -299,6 +299,25 @@ void read_section_headers(uint8_t* buf, Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list
     }
 }
 
+Elf64_Sym** read_symbol_table(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list) {
+    size_t sym_tab_index = -1;
+    for (size_t i = 0; i < ehdr->e_shnum; ++i) {
+        if (shdr_list[i]->sh_type == SHT_SYMTAB) {
+            sym_tab_index = i;
+            break;
+        }
+    }
+
+    if (sym_tab_index == -1ul) {
+        printf("Symbol table doesn't exist\n");
+    }
+
+    Elf64_Shdr* symbol_table = shdr_list[sym_tab_index];
+    printf("%ld\n", symbol_table->sh_offset);
+
+    return (Elf64_Sym**)(0);
+}
+
 void read_elf(const char* filename, uint8_t* buf) {
     Elf64_Ehdr* ehdr = (Elf64_Ehdr*)malloc(ehdr_size);
     read_elf_header(filename, buf, ehdr);
@@ -313,6 +332,11 @@ void read_elf(const char* filename, uint8_t* buf) {
     uint8_t* strtab = (uint8_t*)malloc(string_table->sh_size);
     memcpy(strtab, buf + string_table->sh_offset, string_table->sh_size);
 
+    Elf64_Sym** symtab = read_symbol_table(ehdr, shdr_list);
+
+    if (symtab) {
+        free(symtab);
+    }
     free(strtab);
     for (size_t i = 0; i < ehdr->e_shnum; ++i) {
         free(shdr_list[i]);

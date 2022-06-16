@@ -164,3 +164,14 @@ typedef struct {
 } Elf64_Shdr;
 
 const uint64_t shdr_size = sizeof(Elf64_Shdr);
+
+typedef struct {
+    uint32_t      st_name;
+    uint8_t       st_info;
+    uint8_t       st_other;
+    uint16_t      st_shndx;
+    uint64_t      st_value;
+    uint64_t      st_size;
+} Elf64_Sym;
+
+const uint64_t sym_size = sizeof(Elf64_Sym);
