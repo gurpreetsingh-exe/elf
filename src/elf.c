@@ -191,6 +191,39 @@ const char* shdr_type(uint32_t type) {
     }
 }
 
+void dump_section_headers(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list, uint8_t* strtab) {
+    printf("There are %d section headers, starting at offset %#lx\n", ehdr->e_shnum, ehdr->e_shoff);
+    printf("\nSection Headers:\n");
+    printf("  Name\
+                         Type\
+           Address\
+            Offset\
+              Size\
+           EntSize\
+    Flags\
+  Link\
+  Info\
+  Align\n");
+
+    for (size_t i = 0; i < ehdr->e_shnum; ++i) {
+        char buffer[128] = {0};
+        for (size_t j = 0; strtab[j + shdr_list[i]->sh_name]; ++j) {
+            buffer[j] = strtab[j + shdr_list[i]->sh_name];
+        }
+        printf("  %-21s", buffer);
+        printf("  %10s", shdr_type(shdr_list[i]->sh_type));
+        printf("  %#16lx", shdr_list[i]->sh_addr);
+        printf("  %#16lx", shdr_list[i]->sh_offset);
+        printf("  %#16lx", shdr_list[i]->sh_size);
+        printf("  %#16lx", shdr_list[i]->sh_entsize);
+        printf("  %7ld", shdr_list[i]->sh_flags);
+        printf("  %4d", shdr_list[i]->sh_link);
+        printf("  %4d", shdr_list[i]->sh_info);
+        printf("  %5ld", shdr_list[i]->sh_addralign);
+        printf("\n");
+    }
+}
+
 void read_elf_header(const char* filename, uint8_t* buf, Elf64_Ehdr* ehdr) {
     for (size_t i = 0; i < EI_MAG; ++i) {
         if (buf[i] != e_ident[i]) {
