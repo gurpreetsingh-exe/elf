@@ -91,7 +91,7 @@ void dump_header(Elf64_Ehdr* ehdr) {
     printf("  String table index: \t\t%d\n", ehdr->e_shstrndx);
 }
 
-const char* get_phdr_type(uint32_t type) {
+const char* phdr_type(uint32_t type) {
     switch (type) {
         case PT_NULL:
             return "NULL";
@@ -114,7 +114,7 @@ const char* get_phdr_type(uint32_t type) {
 
 void dump_program_headers(Elf64_Ehdr* ehdr, Elf64_Phdr** phdr_list) {
     printf("File type: %s\n", elf_type[ehdr->e_type]);
-    printf("Entry point: 0x%lx\n", ehdr->e_entry);
+    printf("Entry point: %#lx\n", ehdr->e_entry);
     printf("There are %d program header, starting at offset %ld\n", ehdr->e_phnum, ehdr->e_phoff);
     printf("\nProgram Headers:\n");
     printf("  Type\
@@ -126,7 +126,7 @@ void dump_program_headers(Elf64_Ehdr* ehdr, Elf64_Phdr** phdr_list) {
      Flags\
      Align\n");
     for (size_t i = 0; i < ehdr->e_phnum; ++i) {
-        printf("  %-13s", get_phdr_type(phdr_list[i]->p_type));
+        printf("  %-13s", phdr_type(phdr_list[i]->p_type));
         printf("  %#18lx", phdr_list[i]->p_offset);
         printf("  %#18lx", phdr_list[i]->p_filesz);
         printf("  %#18lx", phdr_list[i]->p_vaddr);
@@ -223,6 +223,11 @@ void read_elf(const char* filename, uint8_t* buf) {
     Elf64_Shdr** shdr_list = (Elf64_Shdr**)malloc(shdr_size * ehdr->e_shnum);
     read_section_headers(buf, ehdr, shdr_list);
 
+    Elf64_Shdr* string_table = shdr_list[ehdr->e_shstrndx];
+    uint8_t* strtab = (uint8_t*)malloc(string_table->sh_size);
+    memcpy(strtab, buf + string_table->sh_offset, string_table->sh_size);
+
+    free(strtab);
     for (size_t i = 0; i < ehdr->e_shnum; ++i) {
         free(shdr_list[i]);
     }
