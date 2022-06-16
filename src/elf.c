@@ -60,6 +60,10 @@ uint32_t read_u32(const uint8_t* buf, uint32_t addr) {
         | buf[addr + 3] << 24;
 }
 
+uint16_t read_u16(const uint8_t* buf, uint16_t addr) {
+    return buf[addr] | buf[addr + 1] << 8;
+}
+
 void dump_header(Elf64_Ehdr ehdr) {
     printf("ELF Header:\n  Magic:   ");
     for (size_t i = 0; i < 16; ++i) {
@@ -71,8 +75,8 @@ void dump_header(Elf64_Ehdr ehdr) {
     printf("  Data: \t\t\t%s endian\n", elf_data[ehdr.e_ident[5] - 1]);
     printf("  Version: \t\t\t%d\n", ehdr.e_ident[6]);
     printf("  OS/ABI: \t\t\t%s\n", elf_abi[ehdr.e_ident[7]]);
-    printf("  ABI Version: \t\t\t%d\n", ehdr.e_type);
-    printf("  Type: \t\t\t%s\n", elf_type[ehdr.e_machine]);
+    printf("  ABI Version: \t\t\t%d\n", ehdr.e_ident[0x08]);
+    printf("  Type: \t\t\t%s\n", elf_type[ehdr.e_type]);
     printf("  Machine: \t\t\tAdvanced Micro Devices X86-64\n");
     printf("  Version: \t\t\t%d\n", ehdr.e_version);
     printf("  Entry Point: \t\t\t0x%lx\n", ehdr.e_entry);
@@ -100,19 +104,19 @@ void read_elf_header(const char* filename, uint8_t* buf) {
         ehdr.e_ident[i] = buf[i];
     }
 
-    ehdr.e_type      = buf[8];
-    ehdr.e_machine   = buf[16];
-    ehdr.e_version   = buf[0x14];
+    ehdr.e_type      = read_u16(buf, 0x10);
+    ehdr.e_machine   = read_u16(buf, 0x12);
+    ehdr.e_version   = read_u32(buf, 0x14);
     ehdr.e_entry     = read_u64(buf, 0x18);
     ehdr.e_phoff     = read_u64(buf, 0x20);
     ehdr.e_shoff     = read_u64(buf, 0x28);
     ehdr.e_flags     = read_u32(buf, 0x30);
-    ehdr.e_ehsize    = buf[0x34] | buf[0x34 + 1] << 8;
-    ehdr.e_phentsize = buf[0x36] | buf[0x36 + 1] << 8;
-    ehdr.e_phnum     = buf[0x38] | buf[0x38 + 1] << 8;
-    ehdr.e_shentsize = buf[0x3a] | buf[0x3a + 1] << 8;
-    ehdr.e_shnum     = buf[0x3c] | buf[0x3c + 1] << 8;
-    ehdr.e_shstrndx  = buf[0x3e] | buf[0x3e + 1] << 8;
+    ehdr.e_ehsize    = read_u16(buf, 0x34);
+    ehdr.e_phentsize = read_u16(buf, 0x36);
+    ehdr.e_phnum     = read_u16(buf, 0x38);
+    ehdr.e_shentsize = read_u16(buf, 0x3a);
+    ehdr.e_shnum     = read_u16(buf, 0x3c);
+    ehdr.e_shstrndx  = read_u16(buf, 0x3e);
 
     dump_header(ehdr);
 }
