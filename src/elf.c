@@ -138,6 +138,59 @@ void dump_program_headers(Elf64_Ehdr* ehdr, Elf64_Phdr** phdr_list) {
     }
 }
 
+const char* shdr_type(uint32_t type) {
+    switch (type) {
+        case SHT_NULL:
+            return "NULL";
+        case SHT_PROGBITS:
+            return "PROGBITS";
+        case SHT_SYMTAB:
+            return "SYMTAB";
+        case SHT_STRTAB:
+            return "STRTAB";
+        case SHT_RELA:
+            return "RELA";
+        case SHT_HASH:
+            return "HASH";
+        case SHT_DYNAMIC:
+            return "DYNAMIC";
+        case SHT_NOTE:
+            return "NOTE";
+        case SHT_NOBITS:
+            return "NOBITS";
+        case SHT_REL:
+            return "REL";
+        case SHT_SHLIB:
+            return "SHLIB";
+        case SHT_DYNSYM:
+            return "DYNSYM";
+        case SHT_INIT_ARRAY:
+            return "INIT_ARRAY";
+        case SHT_FINI_ARRAY:
+            return "FINI_ARRAY";
+        case SHT_PREINIT_ARRAY:
+            return "PREINIT_ARRAY";
+        case SHT_GROUP:
+            return "GROUP";
+        case SHT_SYMTAB_SHNDX:
+            return "SYMTAB_SHNDX";
+        case SHT_LOOS:
+            return "LOOS";
+        case SHT_HIOS:
+            return "HIOS";
+        case SHT_LOPROC:
+            return "LOPROC";
+        case SHT_HIPROC:
+            return "HIPROC";
+        case SHT_LOUSER:
+            return "LOUSER";
+        case SHT_HIUSER:
+            return "HIUSER";
+        default:
+            return "UNDEFINED";
+    }
+}
+
 void read_elf_header(const char* filename, uint8_t* buf, Elf64_Ehdr* ehdr) {
     for (size_t i = 0; i < EI_MAG; ++i) {
         if (buf[i] != e_ident[i]) {
