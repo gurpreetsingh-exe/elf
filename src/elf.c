@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include <stdint.h>
 #include <sys/stat.h>
+
+#include "elf.h"
 
 #define EI_MAG 4
 #define EI_PAD 7
@@ -67,10 +68,26 @@ void read_elf_header(const char* filename, uint8_t* buf) {
         }
     }
 
+    Elf64_Ehdr ehdr;
     printf("ELF Header:\n  Magic:   ");
     for (size_t i = 0; i < 16; ++i) {
-        printf("%02x ", buf[i]);
+        ehdr.e_ident[i] = buf[i];
+        printf("%02x ", ehdr.e_ident[i]);
     }
+
+    ehdr.e_type = buf[8];
+    ehdr.e_machine = buf[16];
+    ehdr.e_version = buf[0x14];
+    ehdr.e_entry = read_u64(buf, 0x18);
+    ehdr.e_phoff = read_u64(buf, 0x20);
+    ehdr.e_shoff = read_u64(buf, 0x28);
+    ehdr.e_flags = read_u32(buf, 0x30);
+    ehdr.e_ehsize = buf[0x34] | buf[0x34 + 1] << 8;
+    ehdr.e_phentsize = buf[0x36] | buf[0x36 + 1] << 8;
+    ehdr.e_phnum = buf[0x38] | buf[0x38 + 1] << 8;
+    ehdr.e_shentsize = buf[0x3a] | buf[0x3a + 1] << 8;
+    ehdr.e_shnum = buf[0x3c] | buf[0x3c + 1] << 8;
+    ehdr.e_shstrndx = buf[0x3e] | buf[0x3e + 1] << 8;
     printf("\n");
 
     printf("  Class: \t\t\t%s\n\
@@ -91,23 +108,23 @@ void read_elf_header(const char* filename, uint8_t* buf) {
   Size of Section headers: \t%d (bytes)\n\
   Number of Section headers: \t%d\n\
   String table index: \t\t%d\n",
-        elf_class[buf[4] - 1],
-        elf_data[buf[5] - 1],
-        buf[6],
-        elf_abi[buf[7]],
-        buf[8],
-        elf_type[buf[9 + EI_PAD]],
-        buf[0x14],
-        read_u64(buf, 0x18),
-        read_u64(buf, 0x20),
-        read_u64(buf, 0x28),
-        read_u32(buf, 0x30),
-        buf[0x34] | buf[0x34 + 1] << 8,
-        buf[0x36] | buf[0x36 + 1] << 8,
-        buf[0x38] | buf[0x38 + 1] << 8,
-        buf[0x3a] | buf[0x3a + 1] << 8,
-        buf[0x3c] | buf[0x3c + 1] << 8,
-        buf[0x3e] | buf[0x3e + 1] << 8);
+        elf_class[ehdr.e_ident[4] - 1],
+        elf_data[ehdr.e_ident[5] - 1],
+        ehdr.e_ident[6],
+        elf_abi[ehdr.e_ident[7]],
+        ehdr.e_type,
+        elf_type[ehdr.e_machine],
+        ehdr.e_version,
+        ehdr.e_entry,
+        ehdr.e_phoff,
+        ehdr.e_shoff,
+        ehdr.e_flags,
+        ehdr.e_ehsize,
+        ehdr.e_phentsize,
+        ehdr.e_phnum,
+        ehdr.e_shentsize,
+        ehdr.e_shnum,
+        ehdr.e_shstrndx);
 }
 
 void read_elf(const char* filename, uint8_t* buf) {
