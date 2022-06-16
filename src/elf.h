@@ -21,6 +21,43 @@ typedef struct {
 
 const uint64_t ehdr_size = sizeof(Elf64_Ehdr);
 
+
+// Program header types
+
+// The array element is unused and the other
+// members' values are undefined
+#define PT_NULL     0x00000000
+
+// Specifies a loadable segment,
+// described by p_filesz and p_memsz.
+#define PT_LOAD     0x00000001
+
+// Specifies dynamic linking information.
+#define PT_DYNAMIC  0x00000002
+
+// Specifies the location and size of a null-terminated
+// pathname to invoke as an interpreter.
+#define PT_INTERP   0x00000003
+
+// Specifies the location of notes (Elf64_Nhdr)
+#define PT_NOTE     0x00000004
+
+// This segment type is reserved but has unspecified semantics.
+#define PT_SHLIB    0x00000005
+
+// The array element, if present, specifies the
+// location and size of the program header table
+// itself, both in the file and in the memory image
+// of the program.
+#define PT_PHDR     0x00000006
+
+// Values in the inclusive range [PT_LOPROC,
+// PT_HIPROC] are reserved for processor-specific
+// semantics.
+#define PT_LOPROC   0x70000000
+#define PT_HIPROC   0x7FFFFFFF
+
+
 typedef struct {
     uint32_t   p_type;
     uint32_t   p_flags;

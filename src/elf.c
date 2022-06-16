@@ -91,6 +91,53 @@ void dump_header(Elf64_Ehdr* ehdr) {
     printf("  String table index: \t\t%d\n", ehdr->e_shstrndx);
 }
 
+const char* get_phdr_type(uint32_t type) {
+    switch (type) {
+        case PT_NULL:
+            return "NULL";
+        case PT_LOAD:
+            return "LOAD";
+        case PT_DYNAMIC:
+            return "DYNAMIC";
+        case PT_INTERP:
+            return "INTERP";
+        case PT_NOTE:
+            return "NOTE";
+        case PT_SHLIB:
+            return "SHLIB";
+        case PT_PHDR:
+            return "PHDR";
+        default:
+            return "UNDEFINED";
+    }
+}
+
+void dump_program_headers(Elf64_Ehdr* ehdr, Elf64_Phdr** phdr_list) {
+    printf("File type: %s\n", elf_type[ehdr->e_type]);
+    printf("Entry point: 0x%lx\n", ehdr->e_entry);
+    printf("There are %d program header, starting at offset %ld\n", ehdr->e_phnum, ehdr->e_phoff);
+    printf("\nProgram Headers:\n");
+    printf("  Type\
+                       Offset\
+             FileSiz\
+            VirtAddr\
+              MemSiz\
+            PhysAddr\
+     Flags\
+     Align\n");
+    for (size_t i = 0; i < ehdr->e_phnum; ++i) {
+        printf("  %-13s", get_phdr_type(phdr_list[i]->p_type));
+        printf("  %#18lx", phdr_list[i]->p_offset);
+        printf("  %#18lx", phdr_list[i]->p_filesz);
+        printf("  %#18lx", phdr_list[i]->p_vaddr);
+        printf("  %#18lx", phdr_list[i]->p_memsz);
+        printf("  %#18lx", phdr_list[i]->p_paddr);
+        printf("  %8x", phdr_list[i]->p_flags);
+        printf("  %#8lx", phdr_list[i]->p_align);
+        printf("\n");
+    }
+}
+
 void read_elf_header(const char* filename, uint8_t* buf, Elf64_Ehdr* ehdr) {
     for (size_t i = 0; i < EI_MAG; ++i) {
         if (buf[i] != e_ident[i]) {
@@ -147,6 +194,7 @@ void read_elf(const char* filename, uint8_t* buf) {
 
     Elf64_Phdr** phdr_list = (Elf64_Phdr**)malloc(phdr_size * ehdr->e_phnum);
     read_program_headers(buf, ehdr, phdr_list);
+    dump_program_headers(ehdr, phdr_list);
 
     for (size_t i = 0; i < ehdr->e_phnum; ++i) {
         free(phdr_list[i]);
