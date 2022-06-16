@@ -188,13 +188,45 @@ void read_program_headers(uint8_t* buf, Elf64_Ehdr* ehdr, Elf64_Phdr** phdr_list
     }
 }
 
+Elf64_Shdr* read_section_header(uint8_t* buf, uint64_t shoff) {
+    Elf64_Shdr* shdr = (Elf64_Shdr*)malloc(shdr_size);
+
+    shdr->sh_name      = read_u32(buf, 0x00 + shoff);
+    shdr->sh_type      = read_u32(buf, 0x04 + shoff);
+    shdr->sh_flags     = read_u64(buf, 0x08 + shoff);
+    shdr->sh_addr      = read_u64(buf, 0x10 + shoff);
+    shdr->sh_offset    = read_u64(buf, 0x18 + shoff);
+    shdr->sh_size      = read_u64(buf, 0x20 + shoff);
+    shdr->sh_link      = read_u32(buf, 0x28 + shoff);
+    shdr->sh_info      = read_u32(buf, 0x2c + shoff);
+    shdr->sh_addralign = read_u64(buf, 0x30 + shoff);
+    shdr->sh_entsize   = read_u64(buf, 0x38 + shoff);
+
+    return shdr;
+}
+
+void read_section_headers(uint8_t* buf, Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list) {
+    uint64_t shoff = ehdr->e_shoff;
+    for (size_t i = 0; i < ehdr->e_shnum; ++i) {
+        shdr_list[i] = read_section_header(buf, shoff);
+        shoff += shdr_size;
+    }
+}
+
 void read_elf(const char* filename, uint8_t* buf) {
     Elf64_Ehdr* ehdr = (Elf64_Ehdr*)malloc(ehdr_size);
     read_elf_header(filename, buf, ehdr);
 
     Elf64_Phdr** phdr_list = (Elf64_Phdr**)malloc(phdr_size * ehdr->e_phnum);
     read_program_headers(buf, ehdr, phdr_list);
-    dump_program_headers(ehdr, phdr_list);
+
+    Elf64_Shdr** shdr_list = (Elf64_Shdr**)malloc(shdr_size * ehdr->e_shnum);
+    read_section_headers(buf, ehdr, shdr_list);
+
+    for (size_t i = 0; i < ehdr->e_shnum; ++i) {
+        free(shdr_list[i]);
+    }
+    free(shdr_list);
 
     for (size_t i = 0; i < ehdr->e_phnum; ++i) {
         free(phdr_list[i]);
