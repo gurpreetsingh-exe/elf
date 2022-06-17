@@ -299,23 +299,26 @@ void read_section_headers(uint8_t* buf, Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list
     }
 }
 
-Elf64_Sym** read_symbol_table(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list) {
-    size_t sym_tab_index = -1;
-    for (size_t i = 0; i < ehdr->e_shnum; ++i) {
+Elf64_Sym* read_sym(uint8_t* buf, uint64_t symoff) {
+    Elf64_Sym* sym = (Elf64_Sym*)malloc(sym_size);
+
+    sym->st_name  = read_u32(buf, 0x00 + symoff);
+    sym->st_info  = buf[0x04 + symoff];
+    sym->st_other = buf[0x05 + symoff];
+    sym->st_shndx = read_u16(buf, 0x06 + symoff);
+    sym->st_value = read_u64(buf, 0x08 + symoff);
+    sym->st_size  = read_u64(buf, 0x10 + symoff);
+
+    return sym;
+}
+
+int find_sym_tab(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list) {
+    for (int i = 0; i < ehdr->e_shnum; ++i) {
         if (shdr_list[i]->sh_type == SHT_SYMTAB) {
-            sym_tab_index = i;
-            break;
+            return i;
         }
     }
-
-    if (sym_tab_index == -1ul) {
-        printf("Symbol table doesn't exist\n");
-    }
-
-    Elf64_Shdr* symbol_table = shdr_list[sym_tab_index];
-    printf("%ld\n", symbol_table->sh_offset);
-
-    return (Elf64_Sym**)(0);
+    return -1;
 }
 
 void read_elf(const char* filename, uint8_t* buf) {
@@ -332,10 +335,31 @@ void read_elf(const char* filename, uint8_t* buf) {
     uint8_t* strtab = (uint8_t*)malloc(string_table->sh_size);
     memcpy(strtab, buf + string_table->sh_offset, string_table->sh_size);
 
-    Elf64_Sym** symtab = read_symbol_table(ehdr, shdr_list);
+    Elf64_Sym** sym_list;
+    uint64_t sym_entries = 0;
 
-    if (symtab) {
-        free(symtab);
+    int sym_tab_index = find_sym_tab(ehdr, shdr_list);
+
+    if (sym_tab_index == -1) {
+        printf("Symbol table doesn't exist\n");
+        sym_list = (Elf64_Sym**)(0);
+    } else {
+        Elf64_Shdr* symbol_table = shdr_list[sym_tab_index];
+        sym_entries = symbol_table->sh_size / sym_size;
+
+        sym_list = (Elf64_Sym**)malloc(sizeof(Elf64_Sym*) * sym_entries);
+        uint64_t symoff = symbol_table->sh_offset;
+        for (size_t i = 0; i < sym_entries; ++i) {
+            sym_list[i] = read_sym(buf, symoff);
+            symoff += sym_size;
+        }
+    }
+
+    if (sym_list != (Elf64_Sym**)(0)) {
+        for (size_t i = 0; i < sym_entries; ++i) {
+            free(sym_list[i]);
+        }
+        free(sym_list);
     }
     free(strtab);
     for (size_t i = 0; i < ehdr->e_shnum; ++i) {
