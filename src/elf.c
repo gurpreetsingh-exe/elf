@@ -224,6 +224,23 @@ void dump_section_headers(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list, uint8_t* shs
     }
 }
 
+void dump_sym_tab(Elf64_Sym** sym_list, uint64_t sym_entries, uint8_t* strtab) {
+    printf("Symbol table .symtab contains %ld entries\n", sym_entries);
+    printf("    Id       Value  Name%68sNdx\n", "");
+    for (size_t i = 0; i < sym_entries; ++i) {
+        char buffer[128] = {0};
+        for (size_t j = 0; strtab[j + sym_list[i]->st_name]; ++j) {
+            buffer[j] = strtab[j + sym_list[i]->st_name];
+        }
+
+        printf("  %4ld", i);
+        printf("  %#10lx", sym_list[i]->st_value);
+        printf("  %-70s", buffer);
+        printf("  %d", sym_list[i]->st_shndx);
+        printf("\n");
+    }
+}
+
 void read_elf_header(const char* filename, uint8_t* buf, Elf64_Ehdr* ehdr) {
     for (size_t i = 0; i < EI_MAG; ++i) {
         if (buf[i] != e_ident[i]) {
