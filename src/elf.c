@@ -191,7 +191,7 @@ const char* shdr_type(uint32_t type) {
     }
 }
 
-void dump_section_headers(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list, uint8_t* strtab) {
+void dump_section_headers(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list, uint8_t* shstrtab) {
     printf("There are %d section headers, starting at offset %#lx\n", ehdr->e_shnum, ehdr->e_shoff);
     printf("\nSection Headers:\n");
     printf("  Name\
@@ -207,8 +207,8 @@ void dump_section_headers(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list, uint8_t* str
 
     for (size_t i = 0; i < ehdr->e_shnum; ++i) {
         char buffer[128] = {0};
-        for (size_t j = 0; strtab[j + shdr_list[i]->sh_name]; ++j) {
-            buffer[j] = strtab[j + shdr_list[i]->sh_name];
+        for (size_t j = 0; shstrtab[j + shdr_list[i]->sh_name]; ++j) {
+            buffer[j] = shstrtab[j + shdr_list[i]->sh_name];
         }
         printf("  %-21s", buffer);
         printf("  %10s", shdr_type(shdr_list[i]->sh_type));
@@ -312,10 +312,29 @@ Elf64_Sym* read_sym(uint8_t* buf, uint64_t symoff) {
     return sym;
 }
 
-int find_sym_tab(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list) {
+int find_section(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list, size_t type) {
     for (int i = 0; i < ehdr->e_shnum; ++i) {
-        if (shdr_list[i]->sh_type == SHT_SYMTAB) {
+        if (shdr_list[i]->sh_type == type) {
             return i;
+        }
+    }
+    return -1;
+}
+
+int find_section_by_name(Elf64_Ehdr* ehdr, Elf64_Shdr** shdr_list, const char* name, uint8_t* shstrtab) {
+    for (int i = 0; i < ehdr->e_shnum; ++i) {
+        char buffer[128] = {0};
+        uint64_t offset = shdr_list[i]->sh_name;
+        size_t j = 0;
+        for (j = 0; shstrtab[j + offset]; ++j) {
+            buffer[j] = shstrtab[j + offset];
+        }
+        if (strlen(name) != j) {
+            continue;
+        } else {
+            if (strncmp(buffer, name, j) == 0) {
+                return i;
+            }
         }
     }
     return -1;
@@ -332,13 +351,13 @@ void read_elf(const char* filename, uint8_t* buf) {
     read_section_headers(buf, ehdr, shdr_list);
 
     Elf64_Shdr* string_table = shdr_list[ehdr->e_shstrndx];
-    uint8_t* strtab = (uint8_t*)malloc(string_table->sh_size);
-    memcpy(strtab, buf + string_table->sh_offset, string_table->sh_size);
+    uint8_t* shstrtab = (uint8_t*)malloc(string_table->sh_size);
+    memcpy(shstrtab, buf + string_table->sh_offset, string_table->sh_size);
 
     Elf64_Sym** sym_list;
     uint64_t sym_entries = 0;
 
-    int sym_tab_index = find_sym_tab(ehdr, shdr_list);
+    int sym_tab_index = find_section(ehdr, shdr_list, SHT_SYMTAB);
 
     if (sym_tab_index == -1) {
         printf("Symbol table doesn't exist\n");
@@ -353,6 +372,13 @@ void read_elf(const char* filename, uint8_t* buf) {
             sym_list[i] = read_sym(buf, symoff);
             symoff += sym_size;
         }
+
+        int str_tab_index = find_section_by_name(ehdr, shdr_list, ".strtab", shstrtab);
+        Elf64_Shdr* str_table = shdr_list[str_tab_index];
+        uint8_t* strtab = (uint8_t*)malloc(str_table->sh_size);
+        memcpy(strtab, buf + str_table->sh_offset, str_table->sh_size);
+
+        free(strtab);
     }
 
     if (sym_list != (Elf64_Sym**)(0)) {
@@ -361,7 +387,7 @@ void read_elf(const char* filename, uint8_t* buf) {
         }
         free(sym_list);
     }
-    free(strtab);
+    free(shstrtab);
     for (size_t i = 0; i < ehdr->e_shnum; ++i) {
         free(shdr_list[i]);
     }
