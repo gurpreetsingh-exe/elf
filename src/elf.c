@@ -322,10 +322,10 @@ void read_elf(const char* filename, uint8_t* buf) {
     Elf64_Ehdr* ehdr = (Elf64_Ehdr*)malloc(ehdr_size);
     read_elf_header(filename, buf, ehdr);
 
-    Elf64_Phdr** phdr_list = (Elf64_Phdr**)malloc(phdr_size * ehdr->e_phnum);
+    Elf64_Phdr** phdr_list = (Elf64_Phdr**)malloc(sizeof(Elf64_Phdr*) * ehdr->e_phnum);
     read_program_headers(buf, ehdr, phdr_list);
 
-    Elf64_Shdr** shdr_list = (Elf64_Shdr**)malloc(shdr_size * ehdr->e_shnum);
+    Elf64_Shdr** shdr_list = (Elf64_Shdr**)malloc(sizeof(Elf64_Shdr*) * ehdr->e_shnum);
     read_section_headers(buf, ehdr, shdr_list);
 
     Elf64_Shdr* string_table = shdr_list[ehdr->e_shstrndx];
